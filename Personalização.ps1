@@ -18,12 +18,17 @@ Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Themes\P
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "RotatingLockScreenOverlayEnabled" -value "0"
 Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\ContentDeliveryManager" -Name "SubscribedContent-338387Enabled" -value "0"
 
+#Habilita Itens ocultos no explorador de arquivos
+Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "Hidden" -value "1"
+
+#Mostrar extensão dos arquivos
+Set-ItemProperty -Path "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced" -Name "HideFileExt" -value "0"
+
+
+
 
 
 $path = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIcons\NewStartPanel" #Caminho no registro dos icones na área de trabalho
-
-
-
 
 #Adiciona os icones My Computer e Pasta pessoal na area de trabalho
 $mycomputer = "{20D04FE0-3AEA-1069-A2D8-08002B30309D}" #Nome da chave My Computer
@@ -50,12 +55,60 @@ if($ppexiste) #Verifica se a chave da pasta pessoal existe, se n existe ele cria
 
 
 
+#Pastas do menu iniciar
+#Este não fui eu que fiz, mas uma explicação de como funciona
 
-#Código para mudar os itens que aparecem no menu iniciar https://github.com/Disassembler0/Win10-Initial-Setup-Script/issues/199
-#Essa é a maior gambiarra que eu já vi na minha vida e eu nem me atrevo a implementar
+#Ele vai até o registro que está sendo usado, e pega os primeiros 20 bytes para montar a nova chave.
+#Os primeiros bytes são compostos por: Bytes genéricos, e bytes que marcam o momento em que foi feito a ultima alteração (Ou seja, eles pode continuar os mesmos
+#já que o momento em que isso não importa pra gente)
+
+#Depois, Ele vai adicionar mais 3 bytes 'genéricos' (eles servem pra indicar que o numero a seguir corresponde ao tamanho da lista de itens)
+
+#Então, ele vai adicionando à chave os bytes correspondentes a cada pasta.
+
+#Depois ele adiciona mais uns bytes genéricos pra determinar o fim do valor da chave.
+
+#Depois ele muda o conteudo da chave para a chave modificada que a gente criou
+
+$itemsToDisplay = @("explorer", "settings", "documents", "downloads", "personal") #Lista de itens no menu iniciar
+
+#$key pega a chave que ta sendo usada atualmente
+$key = Get-ItemProperty "HKCU:\Software\Microsoft\Windows\CurrentVersion\CloudStore\Store\Cache\DefaultAccount\*windows.data.unifiedtile.startglobalproperties\Current" 
+$data = $key.Data[0..19] -Join "," #$data = os primeiros 20 bytes, + uma ',' entre eles
+If ($itemsToDisplay.Length -gt 0) {
+    $data += ",203,50,10,$($itemsToDisplay.Length)" #determina a quantidade de itens da lista
 
 
-
+    If ($itemsToDisplay -contains "explorer") {
+        $data += ",5,188,201,168,164,1,36,140,172,3,68,137,133,1,102,160,129,186,203,189,215,168,164,130,1,0"
+    }
+    If ($itemsToDisplay -contains "settings") {
+        $data += ",5,134,145,204,147,5,36,170,163,1,68,195,132,1,102,159,247,157,177,135,203,209,172,212,1,0"
+    }
+    If ($itemsToDisplay -contains "documents") {
+        $data += ",5,206,171,211,233,2,36,218,244,3,68,195,138,1,102,130,229,139,177,174,253,253,187,60,0"
+    }
+    If ($itemsToDisplay -contains "downloads") {
+        $data += ",5,175,230,158,155,14,36,222,147,2,68,213,134,1,102,191,157,135,155,191,143,198,212,55,0"
+    }
+    If ($itemsToDisplay -contains "music") {
+        $data += ",5,160,140,172,128,11,36,209,254,1,68,178,152,1,102,170,189,208,225,204,234,223,185,21,0"
+    }
+    If ($itemsToDisplay -contains "pictures") {
+        $data += ",5,160,143,252,193,3,36,138,208,3,68,128,153,1,102,176,181,153,220,205,176,151,222,77,0"
+    }
+    If ($itemsToDisplay -contains "videos") {
+        $data += ",5,197,203,206,149,4,36,134,251,1,68,244,133,1,102,128,201,206,212,175,217,158,196,181,1,0"
+    }
+    If ($itemsToDisplay -contains "network") {
+        $data += ",5,196,130,214,243,15,36,141,16,68,174,133,1,102,139,181,211,233,254,210,237,177,148,1,0"
+    }
+    If ($itemsToDisplay -contains "personal") {
+        $data += ",5,202,224,246,165,7,36,202,242,3,68,232,158,1,102,139,173,143,194,249,160,135,212,188,1,0"
+    }
+}
+$data += ",194,60,1,194,70,1,197,90,1,0" #Determina o fim da lista
+Set-ItemProperty -Path $key.PSPath -Name "Data" -Type Binary -Value $data.Split(",") #muda o valor da chave
 
 
 
