@@ -25,7 +25,7 @@ $path = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\HideDesktopIco
 
 #Adiciona os icones My Computer e Pasta pessoal na area de trabalho
 $mycomputer = "{20D04FE0-3AEA-1069-A2D8-08002B30309D}" #Nome da chave My Computer
-$mcexiste = Get-ItemProperty -Path $path -Name $mycomputer
+$mcexiste = Get-ItemProperty -Path $path -Name $mycomputer -ErrorAction SilentlyContinue
 
 if($mcexiste) #Verifica se a chave mycomputer existe, se n existe ele cria e atribui o valor 0, se já existir ele muda o valor para 0
 {
@@ -36,7 +36,7 @@ if($mcexiste) #Verifica se a chave mycomputer existe, se n existe ele cria e atr
 
 
 $pastapessoal = "{59031a47-3f72-44a7-89c5-5595fe6b30ee}" #Nome da chave da pasta pessoal
-$ppexiste= Get-ItemProperty -Path $path -Name $pastapessoal
+$ppexiste= Get-ItemProperty -Path $path -Name $pastapessoal -ErrorAction SilentlyContinue
 
 if($ppexiste) #Verifica se a chave da pasta pessoal existe, se n existe ele cria e atribui o valor 0, se já existir ele muda o valor para 0
 {
@@ -62,7 +62,7 @@ if($ppexiste) #Verifica se a chave da pasta pessoal existe, se n existe ele cria
 #Substituir prompt de comando pelo windows powershell no menu quando eu clicar o botão direito
 $pspath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
 $psvalue = "DontUsePowerShellOnWinX"
-$psexiste = Get-ItemProperty -Path $pspath -Name $psvalue
+$psexiste = Get-ItemProperty -Path $pspath -Name $psvalue -ErrorAction SilentlyContinue
 
 if($psexiste) #Verifica se a DontUsePowershell... existe, se n existe ele cria e atribui o valor 1, se já existir ele muda o valor para 1
 {
@@ -77,7 +77,7 @@ if($psexiste) #Verifica se a DontUsePowershell... existe, se n existe ele cria e
 #Desabilita o botão visão de tarefas
 $vtpath = "HKCU:\SOFTWARE\Microsoft\Windows\CurrentVersion\Explorer\Advanced"
 $vtvalue = "ShowTaskViewButton"
-$vtexiste = Get-ItemProperty -Path $vtpath -Name $vtvalue
+$vtexiste = Get-ItemProperty -Path $vtpath -Name $vtvalue -ErrorAction SilentlyContinue
 
 if($vtexiste){
     Set-ItemProperty -Path $vtpath -Name $vtvalue -Value "0" 
@@ -112,13 +112,13 @@ Else
 
 
 
-#
+#Hash table esquisita do Accent Pallet
 $AccentPaletteKey = @{
 	Key   = 'AccentPalette';
 	Type  = "BINARY";
 	Value = 'd9,d1,ce,00,c8,c0,be,00,a7,a0,9f,00,7a,75,74,00,5f,5b,5a,00,39,36,36,00,26,25,25,00,ea,00,5e,00'
 }
-$hexified = $AccentPaletteKey.Value.Split(',') | ForEach-Object { "0x$_" }
+$hexified = $AccentPaletteKey.Value.Split(',') | ForEach-Object { "0x$_" } #Esta linha adiciona '0x' antes de cada hex. é o formato q o regedit aceita ¯\_(ツ)_/¯
 
 If ($Null -eq (Get-ItemProperty -Path $RegPath -Name $AccentPaletteKey.Key -ErrorAction SilentlyContinue))
 {
@@ -130,7 +130,7 @@ Else
 }
 
 
-#MotionAccentId_v1.00 Key
+#MotionAccentId_v1.00 Key | Essa chave é quase sempre 0x000000db. Mas é bom definir pra garantir 
 $MotionAccentIdKey = @{
 	Key   = 'MotionAccentId_v1.00';
 	Type  = "DWORD";
@@ -148,7 +148,7 @@ Else
 
 
 
-#Start Color Menu Key
+#Hash table da chave StartMenuKey
 $StartMenuKey = @{
 	Key   = 'StartColorMenu';
 	Type  = "DWORD";
@@ -163,9 +163,6 @@ Else
 {
 	Set-ItemProperty -Path $RegPath -Name $StartMenuKey.Key -Value $StartMenuKey.Value -Force
 }
-
-
-Stop-Process -ProcessName explorer -Force -ErrorAction SilentlyContinue
 
 
 #Restarta o Explorer.exe (Necessário pra aplicar as mudanças cetinho)
