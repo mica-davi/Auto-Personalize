@@ -49,9 +49,6 @@ if($ppexiste) #Verifica se a chave da pasta pessoal existe, se n existe ele cria
 
 
 
-
-
-
 #Código para mudar os itens que aparecem no menu iniciar https://github.com/Disassembler0/Win10-Initial-Setup-Script/issues/199
 #Essa é a maior gambiarra que eu já vi na minha vida e eu nem me atrevo a implementar
 
@@ -88,7 +85,89 @@ if($vtexiste){
     New-ItemProperty -Path $vtpath -Name $vtvalue -Value "0" -PropertyType DWord 
 }
 
+$RegPath = "HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent"
+
+
+
+#O script abaixo muda a cor de destaque do windows
+
+#Path do registro
+$RegPath="HKCU:\Software\Microsoft\Windows\CurrentVersion\Explorer\Accent"
+#Hashtable da chave AccentPalletKey
+$AccentColorMenuKey = @{
+	Key   = 'AccentColorMenu';
+	Type  = "DWORD";
+	Value = '0xff74757a'
+}
+
+If ($Null -eq (Get-ItemProperty -Path $RegPath -Name $AccentColorMenuKey.Key -ErrorAction SilentlyContinue))
+{
+	New-ItemProperty -Path $RegPath -Name $AccentColorMenuKey.Key -Value $AccentColorMenuKey.Value -PropertyType $AccentColorMenuKey.Type -Force
+}
+Else
+{
+	Set-ItemProperty -Path $RegPath -Name $AccentColorMenuKey.Key -Value $AccentColorMenuKey.Value -Force
+}
+
+
+
+
+#
+$AccentPaletteKey = @{
+	Key   = 'AccentPalette';
+	Type  = "BINARY";
+	Value = 'd9,d1,ce,00,c8,c0,be,00,a7,a0,9f,00,7a,75,74,00,5f,5b,5a,00,39,36,36,00,26,25,25,00,ea,00,5e,00'
+}
+$hexified = $AccentPaletteKey.Value.Split(',') | ForEach-Object { "0x$_" }
+
+If ($Null -eq (Get-ItemProperty -Path $RegPath -Name $AccentPaletteKey.Key -ErrorAction SilentlyContinue))
+{
+	New-ItemProperty -Path $RegPath -Name $AccentPaletteKey.Key -PropertyType Binary -Value ([byte[]]$hexified)
+}
+Else
+{
+	Set-ItemProperty -Path $RegPath -Name $AccentPaletteKey.Key -Value ([byte[]]$hexified) -Force
+}
+
+
+#MotionAccentId_v1.00 Key
+$MotionAccentIdKey = @{
+	Key   = 'MotionAccentId_v1.00';
+	Type  = "DWORD";
+	Value = '0x000000db'
+}
+
+If ($Null -eq (Get-ItemProperty -Path $RegPath -Name $MotionAccentIdKey.Key -ErrorAction SilentlyContinue))
+{
+	New-ItemProperty -Path $RegPath -Name $MotionAccentIdKey.Key -Value $MotionAccentIdKey.Value -PropertyType $MotionAccentIdKey.Type -Force
+}
+Else
+{
+	Set-ItemProperty -Path $RegPath -Name $MotionAccentIdKey.Key -Value $MotionAccentIdKey.Value -Force
+}
+
+
+
+#Start Color Menu Key
+$StartMenuKey = @{
+	Key   = 'StartColorMenu';
+	Type  = "DWORD";
+	Value = '0xff5a5b5f'
+}
+
+If ($Null -eq (Get-ItemProperty -Path $RegPath -Name $StartMenuKey.Key -ErrorAction SilentlyContinue))
+{
+	New-ItemProperty -Path $RegPath -Name $StartMenuKey.Key -Value $StartMenuKey.Value -PropertyType $StartMenuKey.Type -Force
+}
+Else
+{
+	Set-ItemProperty -Path $RegPath -Name $StartMenuKey.Key -Value $StartMenuKey.Value -Force
+}
+
+
+Stop-Process -ProcessName explorer -Force -ErrorAction SilentlyContinue
 
 
 #Restarta o Explorer.exe (Necessário pra aplicar as mudanças cetinho)
-stop-process -Name "explorer" -Force
+Stop-Process -ProcessName explorer -Force -ErrorAction SilentlyContinue
+
